@@ -1,47 +1,54 @@
+# Import packages
 from dash import Dash, html, dcc, callback, Output, Input
 import dash_ag_grid as dag
-import pandas as pd 
+import pandas as pd
 import plotly.express as px
+import dash_bootstrap_components as dbc
 
-df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv")
+# Incorporate data
+df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv')
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = Dash(external_stylesheets=external_stylesheets)
+# Initialize the app - incorporate a Dash Bootstrap theme
+external_stylesheets = [dbc.themes.CERULEAN]
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.layout = [
-    html.Div( className='row', children='My First App with Data, Graph and Controls',
-             style={'textAlign': 'center', 'color': 'blue', 'fontSize': 30}),
-
-    html.Div(className='row', children=[
-        dcc.RadioItems(options=['pop', 'gdpPercap', 'lifeExp'],
-                       value='lifeExp',
-                       inline=True,
-                       id='my-radio-buttons-final'
-                       )
+# App layout
+app.layout = dbc.Container([
+    dbc.Row([
+        html.Div('My First App with Data, Graph, and Controls', className="text-primary text-center fs-3")
     ]),
 
-    html.Div(className='row', children=[
-        html.Div(className='six columns', children=[
+    dbc.Row([
+        dbc.RadioItems(options=[{"label": x, "value": x} for x in ['pop', 'lifeExp', 'gdpPercap']],
+                       value='lifeExp',
+                       inline=True,
+                       id='radio-buttons-final')
+    ]),
+
+    dbc.Row([
+        dbc.Col([
             dag.AgGrid(
                 rowData=df.to_dict('records'),
-                columnDefs=[{"field":i} for i in df.columns]
+                columnDefs=[{"field": i} for i in df.columns]
             )
-        ]),
-        html.Div(className='six columns', children=[
-            dcc.Graph(figure={}, id='histo-charts-final')
-        ])
+        ], width=6),
 
-    ])
-]
+        dbc.Col([
+            dcc.Graph(figure={}, id='my-first-graph-final')
+        ], width=6),
+    ]),
+
+], fluid=True)
+
+# Add controls to build the interaction
 @callback(
-    Output(component_id='histo-charts-final', component_property='figure'),
-    Input(component_id='my-radio-buttons-final', component_property='value')
+    Output(component_id='my-first-graph-final', component_property='figure'),
+    Input(component_id='radio-buttons-final', component_property='value')
 )
 def update_graph(col_chosen):
     fig = px.histogram(df, x='continent', y=col_chosen, histfunc='avg')
     return fig
 
-# Run the app 
+# Run the app
 if __name__ == '__main__':
-    app.run(debug = True)
-
+    app.run(debug=True)
